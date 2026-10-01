@@ -14,7 +14,7 @@ public final class CallService extends Service implements CallSession.Listener {
     private CallSession.Listener observer; private String message="Ready when you are"; private String transcript="";
     private CallSession.State state=CallSession.State.IDLE; private boolean muted; private boolean speaker=true;
     public final class LocalBinder extends Binder { CallService service(){return CallService.this;} }
-    @Override public void onCreate(){super.onCreate();transport=new LoopbackTransport(()->new ControlCredential(this).load());audio=new NativeAudio(this);session=new CallSession(transport,new SessionStore(this),audio,this,timer);transport.session=session;audio.session=session;}
+    @Override public void onCreate(){super.onCreate();transport=new LoopbackTransport(()->{ControlCredential c=new ControlCredential(this);return c.ready()?c.load():"";});audio=new NativeAudio(this);session=new CallSession(transport,new SessionStore(this),audio,this,timer);transport.session=session;audio.session=session;}
     @Override public IBinder onBind(Intent intent){return binder;}
     @Override public int onStartCommand(Intent intent,int flags,int startId){
         if(intent!=null&&HANGUP.equals(intent.getAction()))session.hangup();

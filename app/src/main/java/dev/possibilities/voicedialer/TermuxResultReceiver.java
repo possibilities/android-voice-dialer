@@ -4,7 +4,7 @@ import android.os.Bundle;
 public final class TermuxResultReceiver extends BroadcastReceiver {
     @Override public void onReceive(Context context,Intent intent){
         Bundle result=intent.getBundleExtra("result");if(result==null)return;
-        if(intent.getData()!=null&&"/pair".equals(intent.getData().getPath()))new ControlCredential(context).completed();
+        if(intent.getData()!=null&&"/pair".equals(intent.getData().getPath()))new ControlCredential(context).completed(result.getInt("err",android.app.Activity.RESULT_OK)==android.app.Activity.RESULT_OK&&result.getInt("exitCode",-1)==0);
         String out=result.getString("stdout","");String err=result.getString("errmsg",result.getString("stderr",""));
         String message;
         if(result.getInt("err",android.app.Activity.RESULT_OK)!=android.app.Activity.RESULT_OK)message="Termux could not run the command. "+err;

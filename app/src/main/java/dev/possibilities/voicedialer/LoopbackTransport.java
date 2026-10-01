@@ -8,6 +8,14 @@ final class LoopbackTransport implements CallSession.Transport {
     volatile CallSession session; private volatile WebSocket socket;
     public void open() {
         String token=credential.get(); if(token.isEmpty()){session.fail("Pair this app with Termux in Setup before calling.");return;}
+        // First prove an ordinary local server rejects unauthenticated clients.
+        // This prevents accidentally using an old unauthenticated listener. It is not mutual auth.
+        socket=client.newWebSocket(new Request.Builder().url(CallSession.ENDPOINT).build(),new WebSocketListener(){
+            public void onOpen(WebSocket ws,Response response){synchronized(session){if(ws!=socket){ws.cancel();return;}ws.cancel();session.fail("Local server allows unauthenticated access. Stop the old server in Termux, then start the paired server.");}}
+            public void onFailure(WebSocket ws,Throwable error,Response response){synchronized(session){if(ws!=socket)return;if(response!=null&&response.code()==401)openAuthorized(token);else session.disconnected("Start the paired server in Termux. Authentication check failed.");}}
+        });
+    }
+    private void openAuthorized(String token){
         socket=client.newWebSocket(new Request.Builder().url(CallSession.ENDPOINT).header("Authorization","Bearer "+token).build(),new WebSocketListener(){
             public void onOpen(WebSocket ws,Response response){synchronized(session){if(ws!=socket){ws.cancel();return;}session.opened();}}
             public void onMessage(WebSocket ws,String text){synchronized(session){if(ws==socket)session.receive(text);}}

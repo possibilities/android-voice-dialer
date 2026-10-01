@@ -15,6 +15,7 @@ final class TermuxBridge {
     static void provision(Context c){
         if(c.checkSelfPermission(PERMISSION)!=PackageManager.PERMISSION_GRANTED)throw new SecurityException("Termux permission is not granted");
         String token=new ControlCredential(c).load();if(token.isEmpty())throw new SecurityException("Pairing not created");
+        new ControlCredential(c).provisioning();
         Intent result=new Intent(c,TermuxResultReceiver.class).setData(Uri.parse("localvoice://termux/pair"));
         int flags=PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_ONE_SHOT;if(Build.VERSION.SDK_INT>=31)flags|=PendingIntent.FLAG_MUTABLE;
         PendingIntent callback=PendingIntent.getBroadcast(c,12,result,flags);

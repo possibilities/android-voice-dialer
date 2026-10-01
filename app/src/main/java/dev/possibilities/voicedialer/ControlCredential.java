@@ -13,7 +13,9 @@ final class ControlCredential {
     private final SharedPreferences prefs;
     ControlCredential(Context c){prefs=c.getSharedPreferences("local-control",Context.MODE_PRIVATE);}
     boolean pending(){return prefs.getBoolean("pending",false);}
-    void completed(){prefs.edit().putBoolean("pending",false).commit();}
+    boolean ready(){return prefs.getBoolean("ready",false)&&!pending();}
+    void provisioning(){prefs.edit().putBoolean("pending",true).putBoolean("ready",false).commit();}
+    void completed(boolean success){prefs.edit().putBoolean("pending",false).putBoolean("ready",success).commit();}
     boolean exists(){return prefs.contains("sealed");}
     String load(){
         if(!exists())return "";
@@ -35,7 +37,7 @@ final class ControlCredential {
             else {KeyGenerator generator=KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES,"AndroidKeyStore");generator.init(new KeyGenParameterSpec.Builder(ALIAS,KeyProperties.PURPOSE_ENCRYPT|KeyProperties.PURPOSE_DECRYPT).setBlockModes(KeyProperties.BLOCK_MODE_GCM).setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE).build());key=generator.generateKey();}
             Cipher cipher=Cipher.getInstance("AES/GCM/NoPadding");cipher.init(Cipher.ENCRYPT_MODE,key);
             String sealed=Base64.encodeToString(cipher.doFinal(token.getBytes(StandardCharsets.UTF_8)),Base64.NO_WRAP);
-            if(!prefs.edit().putString("sealed",sealed).putString("iv",Base64.encodeToString(cipher.getIV(),Base64.NO_WRAP)).putBoolean("pending",true).commit())throw new IllegalStateException();
+            if(!prefs.edit().putString("sealed",sealed).putString("iv",Base64.encodeToString(cipher.getIV(),Base64.NO_WRAP)).putBoolean("pending",true).putBoolean("ready",false).commit())throw new IllegalStateException();
         }catch(Exception e){throw new IllegalStateException("Could not create the local pairing. Nothing was sent to Termux.");}
     }
 }
